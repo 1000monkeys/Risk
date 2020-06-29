@@ -1,0 +1,134 @@
+
+	//include for
+	
+
+	if (!isset($_SESSION['username'])) {
+		header('Location: login.php');
+	}else{
+		$memberid = $_SESSION['memberid'];
+	}
+
+
+	//$beurt_text = '';
+	$if_game_get_id = mysql_query("SELECT * FROM gamememberids WHERE memberid='$memberid' AND finished='0';");
+	$value = mysql_fetch_array($if_game_get_id);
+	$game_id = $value['gameid'];
+
+	$games_query = mysql_query("SELECT * FROM games WHERE gameid='$game_id';");
+	$value = mysql_fetch_array($games_query);
+	$beurt = $value['beurt'];
+	$amount_of_players = $value['amount_of_players'];
+
+	$posities_query = mysql_fetch_array("SELECT * FROM posities WHERE gameid='$game_id' AND beurt='$beurt';");
+	$value = mysql_fetch_array($posities_query);
+	$versterking_outside = $value['versterking'];
+	$versterking_outside = explode(";", $versterking_outside);
+	$eigenaar = $value['eigenaar'];
+	$eigenaar = explode(";", $eigenaar);
+	$hoeveelheidmannen = $value['hoeveelheidmannen'];
+	$hoeveelheidmannen = explode(";", $hoeveelheidmannen);
+
+	$i = 0;
+	$players = array();
+	while($i < $amount_of_players){
+		$players[] = $i;
+		$i++;
+	}
+
+
+	//$beurt_text .= 'Hoeveelheid spelers: '.$amount_of_players.', Beurt: '.$beurt.'<br />';
+	$moves_check = mysql_query("SELECT * FROM moves WHERE gameid='$game_id' AND beurt='$beurt';");
+	if (count($players) == $amount_of_players && mysql_num_rows($moves_check) == $amount_of_players) {
+		shuffle($players);
+		foreach ($players as $personal_game_id) {
+			$gamememberids_query = mysql_query("SELECT * FROM gamememberids WHERE gameid='$game_id' AND personal_game_id='$personal_game_id';");
+			$value = mysql_fetch_array($gamememberids_query);
+			$member_id = $value['memberid'];
+
+			$moves_query = mysql_query("SELECT * FROM moves WHERE memberid='$member_id' AND gameid='$game_id' AND beurt='$beurt';");
+			$value = mysql_fetch_array($moves_query);
+			$versterking = $value['versterking'];
+			$versterking = explode(";", $versterking);
+
+			$i = 0;
+			while ($i < count($versterking)){
+				//$beurt_text .= 'Speler: '.$personal_game_id;
+				if ($eigenaar[$versterking[$i]] == $personal_game_id) {
+					$hoeveelheidmannen[$versterking[$i]]++;
+					//$beurt_text .= ' heeft op '.$landenlijstById[$versterking[$i]].' een mannetje geplaatst.';
+				}
+				//$beurt_text .= '<br />';
+				$i++;
+			}
+		}
+
+		foreach ($players as $personal_game_id) {
+			$gamememberids_query = mysql_query("SELECT * FROM gamememberids WHERE gameid='$game_id' AND personal_game_id='$personal_game_id';");
+			$value = mysql_fetch_array($gamememberids_query);
+			$member_id = $value['memberid'];
+
+			$moves_query = mysql_query("SELECT * FROM moves WHERE memberid='$member_id' AND gameid='$game_id' AND beurt='$beurt';");
+			$value = mysql_fetch_array($moves_query);
+			$source_land = $value['sourceland'];
+			$target_land = $value['targetland'];
+			$select_hm = $value['selecthm'];
+			$versterking = $value['versterking'];
+			$versterking = explode(";", $versterking);
+
+			if (count($versterking) == $versterking_outside[$personal_game_id]) {
+				if (2 >= ($hoeveelheidmannen[$source_land] - $select_hm)) {
+					if ($eigenaar[$source_land] == $eigenaar[$target_land]) {
+						$hoeveelheidmannen[$source_land] = ($hoeveelheidmannen[$source_land] - $select_hm);
+						$hoeveelheidmannen[$target_land] = ($hoeveelheidmannen[$target_land] + $select_hm);
+					}else if($eigenaar[$source_land] != $eigenaar[$target_land]){
+						$random = rand(0, 1);
+						if ($random == 1) {	
+							$hoeveelheidmannen[$source_land] = $hoeveelheidmannen[$source_land] - $select_hm;
+							$eigenaar[$target_land] = $personal_game_id;
+
+							$random = rand(0, ($hoeveelheidmannen[$target_land]-1));
+							$select_hm = $random;
+
+							$hoeveelheidmannen[$target_land] = $select_hm;
+						}else if ($random == 0){
+							$hoeveelheidmannen[$source_land] = $hoeveelheidmannen[$source_land] - $select_hm;
+
+							$random = rand(1, ($hoeveelheidmannen[$target_land]-1));
+
+							$hoeveelheidmannen[$target_land] = $hoeveelheidmannen[$target_land] - $random;
+						}
+					}
+				}
+			}
+		}
+
+		$i = 0;
+		$eigenaar = '';
+		while (42 > $i) {
+			$eigenaar .= ''.$eigenaar[$i].';';				
+			$i++;
+		}
+
+		$i = 0;
+		$hoeveelheidmannen = '';
+		while (42 > $i) {
+			$hoeveelheidmannen .= ''.$hoeveelheidmannen[$i].';';				
+			$i++;
+		}
+
+	    $versterking = '';
+	    $i = 0;
+	    while ($amount_of_players > $i) {
+			$versterking .= $aantalversterking[$i];
+			$i++;
+			if ($i != $amount_of_players) {
+				$versterking .= ';';
+			}
+	    }
+
+		$beurt++;
+		$insert_posities_query = mysql_query("INSERT INTO posities SET gameid='$game_id', beurt='$beurt', versterking='$versterking', eigenaar='$eigenaar', hoeveelheidmannen='$hoeveelheidmannen';");
+		$insert_games_query = mysql_query("UPDATE games SET beurt='$beurt' WHERE gameid='$game_id';");		
+	}
+
+	header("Location: index.php");

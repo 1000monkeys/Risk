@@ -1,0 +1,48 @@
+body{
+	background-color: white;
+	padding: 0 0 0 0;
+	margin: 0 0 0 0;
+	overflow: hidden;
+}
+
+.gamecont{
+	width: calc(100% - 20px);
+	margin-top: 15px;
+	height: calc(100% - 190px);
+	overflow: scroll;
+	overflow-x: scroll;
+	overflow-y: scroll;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: blue;
+	border: 3px solid gray;
+}
+
+.gamecanvas{
+	background-color: black;
+	background: url('/risk/includes/world_map.png');
+	background-size: 100%;
+}
+
+/*
+.target_div_calc{
+	width: calc(100% - 220px);
+	display: table-cell;
+}
+
+.target_div_calc_view{
+	width: calc(100% - 31px);
+	display: table-cell;
+}
+*/
+.gamecont_view{
+	width: calc(100% - 217px);
+	height: calc(100% - 50px);
+	overflow: scroll;
+	overflow-x: scroll;
+	overflow-y: scroll;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: blue;
+	float: left;	
+}
